@@ -149,3 +149,79 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     index_suffix = template_series[data_time_stamps > t_end]   # zero-padding template on the right side
     
     return np.hstack((index_prefix, Template, index_suffix))
+
+
+def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
+
+      """
+    This function will take as input the amplitude, frequency, standard
+    deviation, initial time, duration time, and interval
+    of time between each value.
+    
+    Note: The data_time_series parameter is the data plus the time
+    stamps. It may be a different size array from data_time_stamps.
+    
+    INPUT:
+    ------
+    A : amplitude
+    f : frequency
+    sigma : standard deviation
+    t_0 : start time of a signal
+    t_duration : duration of time for the signal
+    data_time_stamps : time stamps from the data
+    
+    RETURNS:
+    --------
+    A result of integration between the time series of
+    the template and the data.
+    
+    """
+
+    data_time_stamps = data_time_series[0]
+    temp = template(a, f, sigma, t_0, t_duration, data_time_stamps)
+    
+    result = 0                                          # initializing the value of the variable
+
+    for i in range(0, len(data_time_series[1])):        # data_time_series[1] is y-values bc it's a tuple
+        result += data_time_series[1][i] * temp[i]
+        
+    return result*del_T
+
+
+def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T):
+
+    """
+    This function will take as input the interval of time between
+    each value, the first value of the signal start time, the last 
+    value of the signal time, the array of times for the data, frequency, 
+    standard deviation, and the duration of time for the template.
+    
+    INPUT:
+    ------
+    del_T : interval of time between each value
+    t_start : initial value of the time array
+    t_max : last value of the time array
+    data_time_series : array of times for the data
+    A : amplitude
+    f : frequency
+    sigma : standard deviation
+    t_duration : duration of time for the signal
+    
+    RETURNS:
+    --------
+    A list of integration results for all values in the range.
+    
+    """
+
+    C = []                                         # initializing the value of the variable
+    time_stamps = []                               # creating empty list to save values for plotting
+    
+    while t_start <= t_max:
+        time_stamps.append(t_start)
+        
+        integ = integrator(data_time_series, a, f, sigma, t_start, t_duration, del_T)
+        C.append(integ)                            # computing integral over all 'sections'
+        
+        t_start += del_T_0                         # moving intial time of template over increments of del_T
+        
+    return time_stamps, C                          # returning the list of integration results
