@@ -153,7 +153,7 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
 
 def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
 
-      """
+    """
     This function will take as input the amplitude, frequency, standard
     deviation, initial time, duration time, and interval
     of time between each value.
