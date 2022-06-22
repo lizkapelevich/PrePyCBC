@@ -1,3 +1,7 @@
+import numpy as np
+import math
+from scipy import interpolate
+
 def get_noise(t_0, t_end, del_T):
     
     """
@@ -128,7 +132,6 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     --------
     A template that will match the given signal using
     zero-padding if necessary.
-    
     """
     
     t_end = t_duration + t_0
@@ -198,6 +201,7 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
     
     INPUT:
     ------
+    del_T_0 : interval of time for the template
     del_T : interval of time between each value
     t_start : initial value of the time array
     t_max : last value of the time array
