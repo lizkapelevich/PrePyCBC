@@ -158,11 +158,10 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
 
     """
     This function will take as input the amplitude, frequency, standard
-    deviation, initial time, duration time, and interval
-    of time between each value.
-    
-    Note: The data_time_series parameter is the data plus the time
-    stamps. It may be a different size array from data_time_stamps.
+    deviation, initial time, duration time, interval of time between 
+    each value, and the array of data plus the time stamps. Note that
+    the data_time_series parameter may be a differens size array from
+    data_time_stamps.
     
     INPUT:
     ------
@@ -171,7 +170,7 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     sigma : standard deviation
     t_0 : start time of a signal
     t_duration : duration of time for the signal
-    data_time_stamps : time stamps from the data
+    data_time_series : data plus the time stamps
     
     RETURNS:
     --------
