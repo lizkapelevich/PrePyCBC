@@ -65,8 +65,8 @@ def get_signal(A, t_0, t_end, del_T, f, sigma):
     return (t, S, del_T_prime)
 
 
-def final_data(a, t_signal_start, t_signal_end, t_noise_start, t_noise_end,
-               del_T, f, sigma):
+def final_data(a, t_signal_start, t_signal_end, t_noise_start, 
+               t_noise_end, del_T, f, sigma):
     """
     This function will take as input the amplitude, time boundaries
     of the signal and noise, interval between their values, the
@@ -228,3 +228,58 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
         t_start += del_T_0                         # moving intial time of template over increments of del_T
         
     return time_stamps, C                          # returning the list of integration results
+
+
+def fs_search(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T):
+    
+    """
+    This function will take as input the interval of time,
+    the starting and ending times, the array of data times, 
+    amplitude, frequency, standard deviation, and the
+    duration of time.
+    
+    INPUT:
+    ------
+    del_T_0 : interval of time between each value
+    t_start : initial time of data
+    t_max : final time of data
+    data_time_series : full time array of data
+    a : amplitude
+    f : frequency
+    sigma : standard deviation
+    t_duration : duration of time
+    
+    RETURNS:
+    --------
+    One value of frequency and one value of standard deviation
+    that correlate with the highest value of cross-correlation.
+    
+    """
+    
+    frequency_list = []                                                           # creating empty array to store other arrays
+    sigma_list = []
+    time_list = []
+    crosscorr_list = []
+    
+    frequency_values = np.arange(0.01, 20, 1)                                     # setting up ranges for which to run loops
+    sigma_values = np.arange(0.01, 10, 1)
+
+    for frequency in frequency_values:
+        for s in sigma_values:
+            times, C = san.cross_correlation(del_T_0, t_start, t_max,             # running calculation
+                            data_time_series, a, frequency, s, t_duration, del_T)
+            time_list.append(times)                                               # appending arrays into empty lists
+            crosscorr_list.append(C)
+            frequency_list.append(frequency)
+            sigma_list.append(s)
+
+    frequency_list = frequency_list.flatten()                                     # flattening 2-D arrays into 1-D
+    sigma_list = sigma_list.flatten()
+    time_list = time_list.flatten()
+    crosscorr_list = crosscorr_list.flatten()
+    
+    largest_value_index = np.argmax(crosscorr_list)                               # finding index of largest value in array
+    frequency_correct = frequency_list[largest_value_index]                       # finding corresponding value using index
+    sigma_correct = sigma_list[largest_value_index]
+    
+    return frequency_correct, sigma_correct                                       # returning two values
