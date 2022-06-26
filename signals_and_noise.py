@@ -138,6 +138,7 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     time_stamps = np.linspace(t_0, t_end, ad_hoc_grid)         # template time stamps with random step-size
     
     t_mean = np.mean(time_stamps)
+
     S = A*np.sin(2*np.pi*f*time_stamps)*np.exp((-(time_stamps - t_mean)**2)/(2*sigma)) # evaluation in ad-hoc grid
     
     del_T_data = np.diff(data_time_stamps)[0]
@@ -178,9 +179,9 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     the template and the data.
     
     """
-
-    data_time_stamps = data_time_series[0]
-    temp = template(a, f, sigma, t_0, t_duration, data_time_stamps)
+#    print("Len data_time_stamps: " + str(len(data_time_stamps)))
+#    print(str(a) + "," + str(f) + "," + str(sigma) + "," + str(t_0) + "," + str(t_duration) + "," + str(data_time_series[0]))
+    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0])
     
     result = 0                                          # initializing the value of the variable
 
@@ -230,7 +231,7 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
     return time_stamps, C                          # returning the list of integration results
 
 
-def fs_search(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T):
+def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T):
     
     """
     This function will take as input the interval of time,
@@ -263,16 +264,18 @@ def fs_search(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration
     
     frequency_values = np.arange(0.01, 20, 1)                                     # setting up ranges for which to run loops
     sigma_values = np.arange(0.01, 10, 1)
-
+    
     for frequency in frequency_values:
         for s in sigma_values:
-            times, C = san.cross_correlation(del_T_0, t_start, t_max,             # running calculation
+            times, C = cross_correlation(del_T_0, t_start, t_max,             # running calculation
                             data_time_series, a, frequency, s, t_duration, del_T)
             time_list.append(times)                                               # appending arrays into empty lists
             crosscorr_list.append(C)
             frequency_list.append(frequency)
             sigma_list.append(s)
-
+            
+            print(f'\r{frequency, s}')
+            
     frequency_list = frequency_list.flatten()                                     # flattening 2-D arrays into 1-D
     sigma_list = sigma_list.flatten()
     time_list = time_list.flatten()
