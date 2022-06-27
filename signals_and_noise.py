@@ -122,8 +122,8 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     INPUT:
     ------
     A : amplitude
-    f : frequency
-    sigma : standard deviation
+    f : array of frequencues
+    sigma : array of standard deviations
     t_0 : start time of a signal
     t_duration : duration of time for the signal
     data_time_stamps : time stamps from the data
@@ -132,27 +132,30 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     --------
     A template that will match the given signal using
     zero-padding if necessary.
+
     """
     
+    del_T_data = np.diff(data_time_stamps)[0]
     t_end = t_duration + t_0
-    time_stamps = np.linspace(t_0, t_end, ad_hoc_grid)         # template time stamps with random step-size
+    time_stamps = np.linspace(t_0, t_end + del_T_data, ad_hoc_grid)         # template time stamps with random step-size
     
     t_mean = np.mean(time_stamps)
 
     S = A*np.sin(2*np.pi*f*time_stamps)*np.exp((-(time_stamps - t_mean)**2)/(2*sigma)) # evaluation in ad-hoc grid
-    
-    del_T_data = np.diff(data_time_stamps)[0]
-    
+ 
     s = interpolate.interp1d(time_stamps, S)                   # interpolating signal in time-stamps of data-grid
-    template_time_stamps = np.arange(t_0, t_end, del_T_data)
-    Template = s(template_time_stamps)                         # evaluating sine-gaussian at data-grid points
+    Template = s(data_time_stamps[(data_time_stamps >= t_0)*(data_time_stamps <= t_end)])
     
     template_series = np.zeros_like(data_time_stamps)          # template time-stamps same length as data time-stamps
     
     index_prefix = template_series[data_time_stamps < t_0]     # zero-padding template on the left side
     index_suffix = template_series[data_time_stamps > t_end]   # zero-padding template on the right side
+    closest_to_t0 = data_time_stamps[np.argmin(np.abs(t_0 - data_time_stamps))]
+    closest_to_tend = data_time_stamps[np.argmin(np.abs(t_end - data_time_stamps))]
+
+    Template = np.hstack((index_prefix, Template, index_suffix))
     
-    return np.hstack((index_prefix, Template, index_suffix))
+    return Template
 
 
 def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
@@ -160,16 +163,18 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     """
     This function will take as input the amplitude, frequency, standard
     deviation, initial time, duration time, interval of time between 
-    each value, and the array of data plus the time stamps. Note that
-    the data_time_series parameter may be a differens size array from
-    data_time_stamps.
+    each value, and the array of data plus the time stamps. 
+    
+    Note that the data_time_series parameter may be a differens size array 
+    from data_time_stamps.
     
     INPUT:
     ------
-    A : amplitude
+    a : amplitude
     f : frequency
     sigma : standard deviation
     t_0 : start time of a signal
+    del_T : interval of time between each value
     t_duration : duration of time for the signal
     data_time_series : data plus the time stamps
     
@@ -179,16 +184,9 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     the template and the data.
     
     """
-#    print("Len data_time_stamps: " + str(len(data_time_stamps)))
-#    print(str(a) + "," + str(f) + "," + str(sigma) + "," + str(t_0) + "," + str(t_duration) + "," + str(data_time_series[0]))
-    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0])
-    
-    result = 0                                          # initializing the value of the variable
 
-    for i in range(0, len(data_time_series[1])):        # data_time_series[1] is y-values bc it's a tuple
-        result += data_time_series[1][i] * temp[i]
-        
-    return result*del_T
+    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0])
+    return np.sum(data_time_series[1] * temp) * del_T
 
 
 def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T):
@@ -201,15 +199,15 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
     
     INPUT:
     ------
-    del_T_0 : interval of time for the template
-    del_T : interval of time between each value
-    t_start : initial value of the time array
-    t_max : last value of the time array
-    data_time_series : array of times for the data
-    A : amplitude
+    a : amplitude
     f : frequency
     sigma : standard deviation
+    t_max : last value of the time array
+    t_start : initial value of the time array    
+    del_T_0 : interval of time for the template
+    del_T : interval of time between each value
     t_duration : duration of time for the signal
+    data_time_series : array of times for the data
     
     RETURNS:
     --------
@@ -231,7 +229,7 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
     return time_stamps, C                          # returning the list of integration results
 
 
-def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T):
+def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T, f_start, f_end, df, s_start, s_end, ds):
     
     """
     This function will take as input the interval of time,
@@ -241,14 +239,14 @@ def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T):
     
     INPUT:
     ------
-    del_T_0 : interval of time between each value
-    t_start : initial time of data
-    t_max : final time of data
-    data_time_series : full time array of data
     a : amplitude
-    f : frequency
+    f : frequency    
+    t_max : final time of data
     sigma : standard deviation
     t_duration : duration of time
+    t_start : initial time of data
+    data_time_series : full time array of data
+    del_T_0 : interval of time between each value
     
     RETURNS:
     --------
@@ -263,12 +261,12 @@ def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T):
     crosscorr_list = []
     max_crosscorr = 0
     
-    frequency_values = np.arange(0.5, 20, 0.5)                                     # setting up ranges for which to run loops
-    sigma_values = np.arange(0.5, 10, 0.5)
+    frequency_values = np.arange(f_start, f_end, df)                              # setting up ranges for which to run loops
+    sigma_values = np.arange(s_start, s_end, ds)
     
     for frequency in frequency_values:
         for s in sigma_values:
-            times, C = cross_correlation(del_T_0, t_start, t_max,             # running calculation
+            times, C = cross_correlation(del_T_0, t_start, t_max,                 # running calculation
                             data_time_series, a, frequency, s, t_duration, del_T)
             if np.amax(C) > max_crosscorr:                                        # 
                 max_crosscorr = np.amax(C)
@@ -279,7 +277,5 @@ def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T):
             crosscorr_list.append(C)
             frequency_list.append(frequency)
             sigma_list.append(s)
-            
-            print(f'\r{frequency, s}')
     
     return frequency_correct, sigma_correct                                       # returning two values
