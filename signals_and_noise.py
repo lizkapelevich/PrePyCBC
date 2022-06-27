@@ -261,28 +261,25 @@ def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T):
     sigma_list = []
     time_list = []
     crosscorr_list = []
+    max_crosscorr = 0
     
-    frequency_values = np.arange(0.01, 20, 1)                                     # setting up ranges for which to run loops
-    sigma_values = np.arange(0.01, 10, 1)
+    frequency_values = np.arange(0.5, 20, 0.5)                                     # setting up ranges for which to run loops
+    sigma_values = np.arange(0.5, 10, 0.5)
     
     for frequency in frequency_values:
         for s in sigma_values:
             times, C = cross_correlation(del_T_0, t_start, t_max,             # running calculation
                             data_time_series, a, frequency, s, t_duration, del_T)
+            if np.amax(C) > max_crosscorr:                                        # 
+                max_crosscorr = np.amax(C)
+                frequency_correct = frequency
+                sigma_correct = s
+            
             time_list.append(times)                                               # appending arrays into empty lists
             crosscorr_list.append(C)
             frequency_list.append(frequency)
             sigma_list.append(s)
             
             print(f'\r{frequency, s}')
-            
-    frequency_list = frequency_list.flatten()                                     # flattening 2-D arrays into 1-D
-    sigma_list = sigma_list.flatten()
-    time_list = time_list.flatten()
-    crosscorr_list = crosscorr_list.flatten()
-    
-    largest_value_index = np.argmax(crosscorr_list)                               # finding index of largest value in array
-    frequency_correct = frequency_list[largest_value_index]                       # finding corresponding value using index
-    sigma_correct = sigma_list[largest_value_index]
     
     return frequency_correct, sigma_correct                                       # returning two values
