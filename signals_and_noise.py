@@ -122,7 +122,7 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     INPUT:
     ------
     A : amplitude
-    f : array of frequencues
+    f : array of frequencies
     sigma : array of standard deviations
     t_0 : start time of a signal
     t_duration : duration of time for the signal
@@ -150,6 +150,7 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     
     index_prefix = template_series[data_time_stamps < t_0]     # zero-padding template on the left side
     index_suffix = template_series[data_time_stamps > t_end]   # zero-padding template on the right side
+    
     closest_to_t0 = data_time_stamps[np.argmin(np.abs(t_0 - data_time_stamps))]
     closest_to_tend = data_time_stamps[np.argmin(np.abs(t_end - data_time_stamps))]
 
@@ -171,7 +172,7 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     INPUT:
     ------
     a : amplitude
-    f : frequency
+    f : array of frequencies
     sigma : standard deviation
     t_0 : start time of a signal
     del_T : interval of time between each value
