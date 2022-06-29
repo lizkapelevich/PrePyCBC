@@ -194,7 +194,7 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     
     """
     
-    temp = san.template(a, f, sigma, t_0, t_duration, data_time_series[0]) # an array of zero-padded templates
+    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0]) # an array of zero-padded templates
 
     result = []
     for i in temp:
@@ -224,7 +224,7 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
     
     RETURNS:
     --------
-    A list of integration results for all values in the range.
+    An array of integration results for all values in the range.
     
     """
 
