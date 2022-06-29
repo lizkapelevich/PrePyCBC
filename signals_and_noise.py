@@ -112,8 +112,8 @@ def final_data(a, t_signal_start, t_signal_end, t_noise_start,
     return (time_series_noise, alldata)
 
 
-def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000):
-
+def template(a, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000):
+    
     """
     This function will take as input the frequency, standard
     deviation, initial time, duration time, and interval
@@ -130,33 +130,40 @@ def template(A, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     
     RETURNS:
     --------
-    A template that will match the given signal using
-    zero-padding if necessary.
+    A template that will match the given signal with 
+    the proper frequency and standard deviation using
+    zero-padding.
 
     """
     
-    del_T_data = np.diff(data_time_stamps)[0]
+    del_T_data = np.diff(data_time_stamps)[0]                                # finding interval between values
     t_end = t_duration + t_0
-    time_stamps = np.linspace(t_0, t_end + del_T_data, ad_hoc_grid)         # template time stamps with random step-size
+    time_stamps = np.linspace(t_0, t_end + del_T_data, ad_hoc_grid)          # creating array of values with random step-size
     
     t_mean = np.mean(time_stamps)
+    t_stamps, frequency = np.meshgrid(time_stamps, f)                        # setting up a matrix for interpolation
 
-    S = A*np.sin(2*np.pi*f*time_stamps)*np.exp((-(time_stamps - t_mean)**2)/(2*sigma)) # evaluation in ad-hoc grid
- 
-    s = interpolate.interp1d(time_stamps, S)                   # interpolating signal in time-stamps of data-grid
-    Template = s(data_time_stamps[(data_time_stamps >= t_0)*(data_time_stamps <= t_end)])
-    
-    template_series = np.zeros_like(data_time_stamps)          # template time-stamps same length as data time-stamps
-    
-    index_prefix = template_series[data_time_stamps < t_0]     # zero-padding template on the left side
-    index_suffix = template_series[data_time_stamps > t_end]   # zero-padding template on the right side
-    
-    closest_to_t0 = data_time_stamps[np.argmin(np.abs(t_0 - data_time_stamps))]
-    closest_to_tend = data_time_stamps[np.argmin(np.abs(t_end - data_time_stamps))]
+    S = a*np.sin(2*np.pi*frequency*t_stamps)*np.exp((-(t_stamps - t_mean)**2)/(2*sigma)) # evaluation in ad-hoc grid
 
-    Template = np.hstack((index_prefix, Template, index_suffix))
+    all_templates = []                                                       # empty list that will store Template values
     
-    return Template
+    for i in range(len(f)):
+        s = S[i]
+        interpolant = interpolate.interp1d(time_stamps, s)           # prepping interp. in time-stamps of data-grid
+        Template = interpolant(data_time_stamps[(data_time_stamps >= t_0)*(data_time_stamps <= t_end)]) # interpolating
+
+        template_series = np.zeros_like(data_time_stamps)            # template time-stamps same length as data time-stamps
+
+        index_prefix = template_series[data_time_stamps < t_0]       # zero-padding template on the left side
+        index_suffix = template_series[data_time_stamps > t_end]     # zero-padding template on the right side
+
+        closest_to_t0 = data_time_stamps[np.argmin(np.abs(t_0 - data_time_stamps))]     # approximating min value near start
+        closest_to_tend = data_time_stamps[np.argmin(np.abs(t_end - data_time_stamps))] # approximating min value near end
+        
+        result = np.hstack((index_prefix, Template, index_suffix))       # horizontally stacking zero-padding with template
+        all_templates.append(result)                                     # appending all values into Template
+        
+    return result
 
 
 def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
@@ -186,8 +193,12 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     
     """
 
-    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0])
-    return np.sum(data_time_series[1] * temp) * del_T
+    t_end = t_duration + t_0
+    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0])    # creating a template
+    closest_to_t0 = data_time_series[0][np.argmin(np.abs(t_0 - data_time_series[0]))]
+    closest_to_tend = data_time_series[0][np.argmin(np.abs(t_end - data_time_series[0]))]
+    result = np.sum(data_time_series[1] * temp) * del_T                   # summing over all values in increments of del_T
+    return result
 
 
 def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T):
@@ -256,27 +267,27 @@ def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T, f
     
     """
     
-    frequency_list = []                                                           # creating empty array to store other arrays
+    frequency_list = []                                                          # creating empty array to store other arrays
     sigma_list = []
     time_list = []
     crosscorr_list = []
     max_crosscorr = 0
     
-    frequency_values = np.arange(f_start, f_end, df)                              # setting up ranges for which to run loops
+    frequency_values = np.arange(f_start, f_end, df)                             # setting up ranges for which to run loops
     sigma_values = np.arange(s_start, s_end, ds)
     
     for frequency in frequency_values:
         for s in sigma_values:
-            times, C = cross_correlation(del_T_0, t_start, t_max,                 # running calculation
+            times, C = cross_correlation(del_T_0, t_start, t_max,                # running calculation
                             data_time_series, a, frequency, s, t_duration, del_T)
-            if np.amax(C) > max_crosscorr:                                        # 
+            if np.amax(C) > max_crosscorr:
                 max_crosscorr = np.amax(C)
                 frequency_correct = frequency
                 sigma_correct = s
             
-            time_list.append(times)                                               # appending arrays into empty lists
+            time_list.append(times)                                              # appending arrays into empty lists
             crosscorr_list.append(C)
             frequency_list.append(frequency)
             sigma_list.append(s)
     
-    return frequency_correct, sigma_correct                                       # returning two values
+    return frequency_correct, sigma_correct                                      # returning two values
