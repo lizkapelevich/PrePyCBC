@@ -169,12 +169,13 @@ def template(a, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
 def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
 
     """
-    This function will take as input the amplitude, frequency, standard
-    deviation, initial time, duration time, interval of time between 
-    each value, and the array of data plus the time stamps. 
+    This function will take as input the amplitude, an array 
+    of frequencies, standard deviation, initial time, duration 
+    time, interval of time between each value, and the array 
+    of data plus the time stamps. 
     
-    Note that the data_time_series parameter may be a differens size array 
-    from data_time_stamps.
+    Note that the data_time_series parameter may be a different
+    size array from data_time_stamps.
     
     INPUT:
     ------
@@ -188,16 +189,16 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     
     RETURNS:
     --------
-    A result of integration between the time series of
-    the template and the data.
+    An array of integration results between the time series 
+    of the template and the data.
     
     """
+    
+    temp = san.template(a, f, sigma, t_0, t_duration, data_time_series[0]) # an array of zero-padded templates
 
-    t_end = t_duration + t_0
-    temp = template(a, f, sigma, t_0, t_duration, data_time_series[0])    # creating a template
-    closest_to_t0 = data_time_series[0][np.argmin(np.abs(t_0 - data_time_series[0]))]
-    closest_to_tend = data_time_series[0][np.argmin(np.abs(t_end - data_time_series[0]))]
-    result = np.sum(data_time_series[1] * temp) * del_T                   # summing over all values in increments of del_T
+    result = []
+    for i in temp:
+        result.append(np.sum(data_time_series[1] * i) * del_T)       # integrating over all templates in increments of del_T
     return result
 
 
@@ -212,7 +213,7 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
     INPUT:
     ------
     a : amplitude
-    f : frequency
+    f : array of frequencies
     sigma : standard deviation
     t_max : last value of the time array
     t_start : initial value of the time array    
