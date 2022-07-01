@@ -239,7 +239,7 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
         
         t_start += del_T_0                         # moving intial time of template over increments of del_T
         
-    return time_stamps, C                          # returning the list of integration results
+    return time_stamps, C                          # returning list of times and cross-correlation values`
 
 
 def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T, f_start, f_end, df, s_start, s_end, ds):
