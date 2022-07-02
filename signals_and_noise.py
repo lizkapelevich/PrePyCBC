@@ -1,3 +1,5 @@
+# Provide a data example for each given input
+
 import numpy as np
 import math
 from scipy import interpolate
