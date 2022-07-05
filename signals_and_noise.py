@@ -1,5 +1,3 @@
-# Provide a data example for each given input
-
 import numpy as np
 import math
 from scipy import interpolate
@@ -96,13 +94,13 @@ def final_data(a, t_signal_start, t_signal_end, t_noise_start,
     
     s = interpolate.interp1d(time_series_signal, signal_values)
     
-    index1 = time_series_noise > time_series_signal[0]   # boolean = False before signal in noise time-series
-    index2 = time_series_noise < time_series_signal[-1]  # boolean = False after signal in noise time_series
-    time_series_intersect = index1*index2                # multiplying arrays into one array of booleans
+    index1 = time_series_noise > time_series_signal[0]            # boolean = False before signal in noise time-series
+    index2 = time_series_noise < time_series_signal[-1]           # boolean = False after signal in noise time_series
+    time_series_intersect = index1*index2                         # multiplying arrays into one array of booleans
     
-    zeroes = np.zeros_like(noise_values)                          # create an array of zeroes same length 
-                                                                  # as noise_values
-    signal_time_stamps = time_series_noise[time_series_intersect] # keeping only boolean = True
+    zeroes = np.zeros_like(noise_values)                          # create an array of zeroes same length as noise values
+
+    signal_time_stamps = time_series_noise[time_series_intersect]       # keeping only boolean = True
     signal = s(signal_time_stamps)
 
     data_in_signal = noise_values[time_series_intersect] + signal       # embedding signal in noise
@@ -165,7 +163,7 @@ def template(a, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
         result = np.hstack((index_prefix, Template, index_suffix))       # horizontally stacking zero-padding with template
         all_templates.append(result)                                     # appending all values into Template
         
-    return result
+    return all_templates
 
 
 def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
@@ -175,10 +173,10 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     of frequencies, standard deviation, initial time, duration 
     time, interval of time between each value, and the array 
     of data plus the time stamps. 
-    
+
     Note that the data_time_series parameter may be a different
     size array from data_time_stamps.
-    
+
     INPUT:
     ------
     a : amplitude
@@ -188,7 +186,7 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     del_T : interval of time between each value
     t_duration : duration of time for the signal
     data_time_series : data plus the time stamps
-    
+
     RETURNS:
     --------
     An array of integration results between the time series 
