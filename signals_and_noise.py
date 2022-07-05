@@ -267,7 +267,7 @@ def frequency_time_search(del_T_0, t_start, t_max, data_time_series, a, f, sigma
     correspond with the highest value of cross-correlation.
     
     """
-    
+    # Loop over values of sigma in this function
     times, C = cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T)
     
     C_array = np.array(C)                                                        # creating an array from a list
