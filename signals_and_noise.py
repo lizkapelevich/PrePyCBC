@@ -35,8 +35,9 @@ def get_noise(t_0, t_end, del_T):
 def get_signal(A, t_0, t_end, del_T, f, sigma):
     
     """
-    This function will take as input the amplitude, boundaries of a time stamp
-    from a signal, the frequency, and the standard deviation.
+    This function will take as input the amplitude, boundaries 
+    of a time stamp from a signal, the frequency, and the 
+    standard deviation.
     
     INPUT:
     ------
@@ -94,13 +95,13 @@ def final_data(a, t_signal_start, t_signal_end, t_noise_start,
     
     s = interpolate.interp1d(time_series_signal, signal_values)
     
-    index1 = time_series_noise > time_series_signal[0]   # boolean = False before signal in noise time-series
-    index2 = time_series_noise < time_series_signal[-1]  # boolean = False after signal in noise time_series
-    time_series_intersect = index1*index2                # multiplying arrays into one array of booleans
+    index1 = time_series_noise > time_series_signal[0]            # boolean = False before signal in noise time-series
+    index2 = time_series_noise < time_series_signal[-1]           # boolean = False after signal in noise time_series
+    time_series_intersect = index1*index2                         # multiplying arrays into one array of booleans
     
-    zeroes = np.zeros_like(noise_values)                          # create an array of zeroes same length 
-                                                                  # as noise_values
-    signal_time_stamps = time_series_noise[time_series_intersect] # keeping only boolean = True
+    zeroes = np.zeros_like(noise_values)                          # create an array of zeroes same length as noise values
+
+    signal_time_stamps = time_series_noise[time_series_intersect]       # keeping only boolean = True
     signal = s(signal_time_stamps)
 
     data_in_signal = noise_values[time_series_intersect] + signal       # embedding signal in noise
@@ -123,8 +124,8 @@ def template(a, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
     ------
     A : amplitude
     f : array of frequencies
-    sigma : array of standard deviations
     t_0 : start time of a signal
+    sigma : array of standard deviations
     t_duration : duration of time for the signal
     data_time_stamps : time stamps from the data
     
@@ -163,7 +164,7 @@ def template(a, f, sigma, t_0, t_duration, data_time_stamps, ad_hoc_grid = 10000
         result = np.hstack((index_prefix, Template, index_suffix))       # horizontally stacking zero-padding with template
         all_templates.append(result)                                     # appending all values into Template
         
-    return result
+    return all_templates
 
 
 def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
@@ -173,20 +174,20 @@ def integrator(data_time_series, a, f, sigma, t_0, t_duration, del_T):
     of frequencies, standard deviation, initial time, duration 
     time, interval of time between each value, and the array 
     of data plus the time stamps. 
-    
+
     Note that the data_time_series parameter may be a different
     size array from data_time_stamps.
-    
+
     INPUT:
     ------
     a : amplitude
     f : array of frequencies
-    sigma : standard deviation
     t_0 : start time of a signal
+    sigma : array of standard deviations
     del_T : interval of time between each value
     t_duration : duration of time for the signal
     data_time_series : data plus the time stamps
-    
+
     RETURNS:
     --------
     An array of integration results between the time series 
@@ -206,15 +207,15 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
 
     """
     This function will take as input the interval of time between
-    each value, the first value of the signal start time, the last 
-    value of the signal time, the array of times for the data, frequency, 
-    standard deviation, and the duration of time for the template.
+    each value, the bounds of signal time, the array of times for 
+    the data, the array of frequencies and standard deviations, 
+    and the duration of time for the template.
     
     INPUT:
     ------
     a : amplitude
     f : array of frequencies
-    sigma : standard deviation
+    sigma : array of standard deviations
     t_max : last value of the time array
     t_start : initial value of the time array    
     del_T_0 : interval of time for the template
@@ -239,56 +240,57 @@ def cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_
         
         t_start += del_T_0                         # moving intial time of template over increments of del_T
         
-    return time_stamps, C                          # returning the list of integration results
+    return time_stamps, C                          # returning list of times and cross-correlation values`
 
 
-def fs_search(del_T_0, t_start, t_max, data_time_series, a, t_duration, del_T, f_start, f_end, df, s_start, s_end, ds):
+def frequency_time_sigma_search(del_T_0, t_start, t_max, data_time_series, a, f, sigma_series, t_duration, del_T):
     
     """
     This function will take as input the interval of time,
-    the starting and ending times, the array of data times, 
-    amplitude, frequency, standard deviation, and the
-    duration of time.
+    the bounds of time, the array of data times, the array of 
+    frequencies and standard deviations, and the duration of time.
     
     INPUT:
     ------
     a : amplitude
-    f : frequency    
+    f : array of frequencies
     t_max : final time of data
-    sigma : standard deviation
     t_duration : duration of time
     t_start : initial time of data
+    sigma : array of standard deviations
     data_time_series : full time array of data
     del_T_0 : interval of time between each value
     
     RETURNS:
     --------
-    One value of frequency and one value of standard deviation
-    that correlate with the highest value of cross-correlation.
+    One value of frequency and one value of time that
+    correspond with the highest value of cross-correlation.
     
     """
+
+    time_values = []
+    C_values = []
     
-    frequency_list = []                                                          # creating empty array to store other arrays
-    sigma_list = []
-    time_list = []
-    crosscorr_list = []
-    max_crosscorr = 0
+    for sigma in sigma_series:
+        times, C = cross_correlation(del_T_0, t_start, t_max, data_time_series, a, f, sigma, t_duration, del_T)
+        time_values.append(np.array(times))
+        C_values.append(np.array(C)) 
+        
+    # C_values shape looks like: [sigma, time, freq]
     
-    frequency_values = np.arange(f_start, f_end, df)                             # setting up ranges for which to run loops
-    sigma_values = np.arange(s_start, s_end, ds)
+    C_values = np.array(C_values)                               # C_values shape looks like: [sigma, time, freq]
+    time_values = np.array(time_values)                         # converting final dimension of list into array
     
-    for frequency in frequency_values:
-        for s in sigma_values:
-            times, C = cross_correlation(del_T_0, t_start, t_max,                # running calculation
-                            data_time_series, a, frequency, s, t_duration, del_T)
-            if np.amax(C) > max_crosscorr:
-                max_crosscorr = np.amax(C)
-                frequency_correct = frequency
-                sigma_correct = s
-            
-            time_list.append(times)                                              # appending arrays into empty lists
-            crosscorr_list.append(C)
-            frequency_list.append(frequency)
-            sigma_list.append(s)
+    C_max_value = np.max(C_values)                              # finding the maximum value
+    find_index = np.where(C_max_value == C_values)              # finding index of maximum value
+
+    index_sigma = int(find_index[0][0])                         # finding index of the C_max_value in sigma array
+    index_time = int(find_index[1][0])                          # finding index of the C_max_value in time array
+    index_freq = int(find_index[2][0])                          # finding index of the C_max_value in freq array
     
-    return frequency_correct, sigma_correct                                      # returning two values
+    
+    sigma_correct = sigma_series[index_sigma]                   # value of sigma for C_max_value
+    time_correct = time_values[index_sigma][index_time]         # value of time for C_max_value
+    frequency_correct = f[index_freq]                           # value of freq for C_max_value
+    
+    return sigma_correct, time_correct, frequency_correct
