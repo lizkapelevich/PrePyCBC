@@ -22,8 +22,7 @@ def get_noise(t_0, t_end, del_T):
 
     duration_data = t_end - t_0
     number_of_values = duration_data / del_T                        # calculating number of time stamps
-    del_T_prime = duration_data / math.ceil(number_of_values)       # new interval of the noise data to allow  
-                                                                    # array to reach end point
+    del_T_prime = duration_data / math.ceil(number_of_values)       # new interval of noise data to allow array to reach end
     
     time_series = np.arange(t_0, t_end + del_T_prime, del_T_prime)  # array from beginning to end of noise time stamp
                                                                     # with increments of the standard deviation
