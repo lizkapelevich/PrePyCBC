@@ -85,7 +85,7 @@ def final_data(a, t_signal_start, t_signal_end, t_noise_start,
     
     RETURNS:
     --------
-    The calculation for embedding a signal within random noise.
+    Time and position for embedding a signal within random noise.
     
     """
     time_series_signal, signal_values, del_T_signal = get_signal(a, t_signal_start, t_signal_end,
